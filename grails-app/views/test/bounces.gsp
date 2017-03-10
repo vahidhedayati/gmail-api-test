@@ -17,17 +17,14 @@
 		<h2>Bounces found : ${instance.size()}</h2><br/>
 		<div class="errors">
 		<g:each in="${instance}" var="failed">
-		    ${failed.bouncedRecord} --> ${failed.mapRecord?.messageTo?.toString()} ${failed.mapRecord?.date} <br/>
+		    ${failed.bouncedRecord} --> ${failed.mapRecord?.id} ${failed.mapRecord?.getSnippet()} ${ }<br/>
+		    <g:each in="${failed.mapRecord.getPayload().headers}" var="a">
+		    ${a }<br/>---
+		    </g:each>
 		</g:each>
 		</div>
 		</g:if>
 	<br/>
-	<g:if test="${gmail.GmailService.messageMap.size()>0}"> 
-		<h2>Total messages sent so far: ${gmail.GmailService.messageMap.size()}</h2><br/>
-		<g:each in="${gmail.GmailService.messageMap}" var="m">
-		  	${m.key } - ${m.value?.messageTo.toString() } -- ${m.value?.date } <br/>
-		</g:each>
-	</g:if>
+	
 	</body>
 </html>
-		
