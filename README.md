@@ -69,7 +69,7 @@ Account2 (Where you create c:\gmail-test\accounts\account2\) and store client_se
 	
 Then obviously you have a process that triggers changes to above `secretFolder` and if everything else is the same then it will trigger that account.
 
-For each account you would go to developer console andgenerate a secret json file save and follow above process.
+For each account you would go to developer console and generate a secret json file save and follow above process.
 
 For the very attempt to send an email a verification step is required with the real account. So from a development machine ensure you are also logged in to correct account. Please visit http://stackoverflow.com/questions/42702921/gmail-api-oauth-two-accounts-possible-issue to see why 
 In short I found after generating for account Y if I were logged in with account X during this last step. All emails would then be sent from account X (seems like a bug). This first step triggers the internal work within gmail API to create the c:\gmail-test\accounts\account2\vh\StoredCredential. This file created is identical for each account hence the separation of account folders.
