@@ -2,6 +2,7 @@ package gmail
 
 import grails.transaction.Transactional
 
+import java.text.SimpleDateFormat
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
 
@@ -24,6 +25,13 @@ import com.google.api.services.gmail.Gmail
 import com.google.api.services.gmail.model.ListMessagesResponse
 import com.google.api.services.gmail.model.Message
 
+
+/**
+ * Existing or experimental verifyBounce using concurrentHashMap no longer used
+ * left as was
+ * 
+ *
+ */
 @Transactional
 class GmailService {
 
@@ -42,9 +50,29 @@ class GmailService {
 	 * @return
 	 */
 	List verifyBounceList (Gmail service) {
+		List foundResults=[]
+		Date date = new Date()
+		use (groovy.time.TimeCategory) {
+			date= date -20.minute
+		}
+		Date yesterday = new Date()-1
+		def bounceRecords = listMessagesMatchingQuery(service,'me','from:mailer-daemon@googlemail.com after:'+yesterday.format('YYYY/MM/dd'))
+		bounceRecords?.each {
+			Message message = getMessage(service,'me',it.id)
+			String receivedDateString = message.getPayload().headers?.find{it.name=='Received'}.value.split(';')[1].trim()
+			SimpleDateFormat df = new SimpleDateFormat('EEE, dd MMM yyyy HH:mm:ss z (Z)')
+			Date receivedDate=df.parse(receivedDateString)
+			if (receivedDate>date) {
+				foundResults<<[bouncedRecord:it,mapRecord:message]
+			}
+		}
+		return foundResults
+	}
+	
+	List verifyBounceListOld (Gmail service) {
 		//cleanOldMessagesFromMap()
 		List foundResults=[]
-		def bounceRecords = listMessagesMatchingQuery(service,'me','mailer-daemon@googlemail.com')
+		def bounceRecords = listMessagesMatchingQuery(service,'me','mailer-daemon@googlemail.com&after=')
 		bounceRecords?.each {
 			BounceRecord foundBounced = messageMap.get(it.threadId)
 			if (!foundBounced) {
@@ -57,13 +85,29 @@ class GmailService {
 		}
 		return foundResults
 	}
+	
+
+	/**
+	 * Reads the message back from mailbox
+	 * @param service
+	 * @param userId
+	 * @param messageId
+	 * @return
+	 * @throws IOException
+	 */
+	Message getMessage(Gmail service, String userId, String messageId) throws IOException {
+		Message message = service.users().messages().get(userId, messageId).execute()
+		///System.out.println("Message snippet: " + message.getSnippet())
+		return message
+	}
+
 
 	/**
 	 * May need more work - to remove older recorders than an hour from 
 	 * running concurrent hashMap - something should bounce within an 
 	 * defaulted to an ..Hour
 	 * @param messageId
-	 */
+	 */	
 	private void cleanOldMessagesFromMap() {
 		Date checkDate = new Date()
 		use (groovy.time.TimeCategory) {
@@ -78,7 +122,7 @@ class GmailService {
 	 * Maybe this needs to be done as part of ui front end check verified they have a bounce
 	 * from bounce.gsp
 	 * @param messageId
-	 */
+	 */	
 	private void removeMessageFromMap(String messageId) {
 		if (messageMap.get(messageId)) {
 			messageMap.remove(messageId)
@@ -122,8 +166,8 @@ class GmailService {
 		try {
 			Message message = createMessageWithEmail(emailContent)
 			message = service.users().messages().send(userId, message).execute()
-			BounceRecord record = new BounceRecord(emailContent.getAllRecipients(),new Date())
-			messageMap.put(message.id,record )
+		//	BounceRecord record = new BounceRecord(emailContent.getAllRecipients(),new Date())
+		//	messageMap.put(message.id,record )
 			return message
 		} catch (Exception e) {
 			//log.error "${e}"
@@ -329,7 +373,6 @@ class GmailService {
 		return messages;
 	}
 
-
 	/**
 	 * Same as createEmail just iterates through a list to add to: 'To' field
 	 * @param to
@@ -338,7 +381,6 @@ class GmailService {
 	 * @param bodyText
 	 * @return
 	 * @throws MessagingException
-	 * Not used was just an example of many users to one email ------------------------------------
 	 */
 	MimeMessage createEmails(List to,String from,String subject,String bodyText) throws MessagingException {
 		Properties props = new Properties()
@@ -353,7 +395,29 @@ class GmailService {
 		return email
 	}
 
+	
+	/**
+	 * not used
+	 * @param service
+	 * @param userId
+	 * @param messageId
+	 * @return
+	 * @throws IOException
+	 * @throws MessagingException
+	 */
+	MimeMessage getMimeMessage(Gmail service, String userId, String messageId) throws IOException, MessagingException {
+		Message message = service.users().messages().get(userId, messageId).setFormat("raw").execute()
 
+		Base64 base64Url = new Base64(true)
+		byte[] emailBytes = base64Url.decodeBase64(message.getRaw())
+
+		Properties props = new Properties()
+		Session session = Session.getDefaultInstance(props, null)
+
+		MimeMessage email = new MimeMessage(session, new ByteArrayInputStream(emailBytes))
+
+		return email
+	}
 
 	/**
 	 * List all Messages of the user's mailbox with labelIds applied.
@@ -386,6 +450,4 @@ class GmailService {
 
 		return messages;
 	}
-
-
 }
