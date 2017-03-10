@@ -29,14 +29,18 @@ class TestingController {
 	 *
 	 * Once you have the file store it in a location as per configuration
 	 */
-	private final String GOOGLEFILE = Holders.config.grailsApplication.config.gmailSecurityFile ?:  'client_secret.json'
-	private final  File SECURITY_FILE = new File(Holders.config.grailsApplication.config.gmailSecurityPath ?: 'c:\\\\gmail-test\\\\'+GOOGLEFILE);
-	private final java.io.File DATA_STORE_DIR = new java.io.File(Holders.config.grailsApplication.config.gmailStoragePath ?: 'c:\\\\gmail-test\\\\vh')
-	private  FileDataStoreFactory DATA_STORE_FACTORY= new FileDataStoreFactory(DATA_STORE_DIR);
-	private final JsonFactory JSON_FACTORY =JacksonFactory.getDefaultInstance()
-	
-	private HttpTransport HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();
-	private final List<String> SCOPES = Arrays.asList(GmailScopes.MAIL_GOOGLE_COM) //GmailScopes.MAIL_GOOGLE_COM, GmailScopes.GMAIL_SEND, GmailScopes.GMAIL_LABELS, GmailScopes.GMAIL_COMPOSE, GmailScopes.GMAIL_INSERT, GmailScopes.GMAIL_MODIFY);
+	private static String secretFile = Holders.config.grailsApplication.config.gmailSecurityFile ?:  'client_secret.json'
+	private static String securityPath = Holders.config.grailsApplication.config.gmailSecurityPath ?: 'c:\\\\gmail-test\\\\accounts\\\\'
+	private static String secretFolder = Holders.config.grailsApplication.config.gmailSecurityFolder ?:  'account1'
+	private static String dataStoragePath = Holders.config.grailsApplication.config.gmailStoragePath ?: 'vh'
+	private static String appName =   Holders.config.grailsApplication.config.gmailAppName ?: 'TEST'
+
+	private static File SECURITY_FILE=new File(securityPath+secretFolder+File.separator+secretFile)
+	private static File DATA_STORE_DIR = new java.io.File(securityPath +secretFolder+File.separator+dataStoragePath)
+	private static FileDataStoreFactory DATA_STORE_FACTORY= new FileDataStoreFactory(DATA_STORE_DIR)
+	private static JsonFactory JSON_FACTORY =JacksonFactory.getDefaultInstance()
+	private static HttpTransport HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport()
+	private static List<String> SCOPES = Arrays.asList(GmailScopes.MAIL_GOOGLE_COM) //GmailScopes.MAIL_GOOGLE_COM, GmailScopes.GMAIL_SEND, GmailScopes.GMAIL_LABELS, GmailScopes.GMAIL_COMPOSE, GmailScopes.GMAIL_INSERT, GmailScopes.GMAIL_MODIFY);
 	
 	//Your Google API Application Name
 	private final String APPLICATION_NAME = 'TEST'
